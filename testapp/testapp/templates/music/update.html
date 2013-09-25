@@ -1,0 +1,41 @@
+{% load class_tag %}
+
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<script src="{{ STATIC_URL }}js/jquery.js"></script>
+	<style type="text/css">
+		body {
+			font-family: Arial;
+		}
+		blockquote {
+			margin-left:20px;
+			border:0px solid white;
+			padding:4px;
+			background-color: rgba(13, 3, 23, 0.2);
+		}
+	</style>
+</head>
+<body></body>
+<h1>Edit band: {{ object }}</h1>
+
+<form action="." method="POST">
+
+	{% csrf_token %}
+
+	<blockquote>
+	{{ form }}
+	</blockquote>
+
+	{% for formset in formsets %}
+	<blockquote> 
+	{% include "music/form-update.html" with formset=formset only  %}
+	</blockquote>
+	{% endfor %}
+
+	<input type="submit" value="Save" />
+
+</body>
+</head>
