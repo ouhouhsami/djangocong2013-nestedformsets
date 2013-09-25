@@ -1,9 +1,4 @@
-{% load class_tag %}
-
-<div id="formset-{{ formset.prefix }}" data-formset-prefix="{{ formset.prefix }}">
 {{ formset.management_form }}
-
-<header><b>{{ formset|get_class }}</b></header>
 
 {% for form in formset %}
 
@@ -22,29 +17,3 @@
     </blockquote>
 
 {% endfor %}
-<br />
-<input type="button" value="Add {{ formset|get_class }}" id="formset-{{ formset.prefix }}-add_more">
-<div id="formset-{{ formset.prefix }}-empty_form" style="display:none">
-        <blockquote>
-        {{ formset.empty_form.as_table }}
-        {% if formset.empty_form.nested %}
-        {% for formset in formset.empty_form.nested %}
-        <blockquote>
-            {% with "music/form-update-empty.html" as filename %}
-            {% include filename with formset=formset only  %}
-            {% endwith %}
-        </blockquote>
-        {% endfor %}
-        {% endif %}
-        </blockquote>
-</div>
-
-<script>
-    $('#formset-{{ formset.prefix }}-add_more').click(function() {
-        var form_idx = $('#id_{{ formset.prefix }}-TOTAL_FORMS').val();
-        $('#formset-{{ formset.prefix }}').append($('#formset-{{ formset.prefix }}-empty_form').html().replace(/__prefix__/g, form_idx));
-        $('#id_{{ formset.prefix }}-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-    });
-</script>
-
-</div>

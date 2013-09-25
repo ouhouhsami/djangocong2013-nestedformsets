@@ -115,14 +115,8 @@ class ExtendedBaseNestedFormset(BaseInlineFormSet):
         for form in self.forms:
             if not self._should_delete_form(form):
                 for f in form.nested:
-                    print ">>>>>>>> ", f.instance.pk
                     if f.instance.pk is not None:
                         f.save(commit=commit)
-                    #else:
-                    #    raise ValidationError([
-                    #        ValidationError('Error 1', code='error1'),
-                    #        ValidationError('Error 2', code='error2'),
-                    #    ])
 
         return result
 
