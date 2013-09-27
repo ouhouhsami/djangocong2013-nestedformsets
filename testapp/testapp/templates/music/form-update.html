@@ -22,7 +22,9 @@
     </blockquote>
 
 {% endfor %}
-<br />
+
+{% comment %}
+
 <input type="button" value="Add {{ formset|get_class }}" id="formset-{{ formset.prefix }}-add_more">
 <div id="formset-{{ formset.prefix }}-empty_form" style="display:none">
         <blockquote>
@@ -42,9 +44,11 @@
 <script>
     $('#formset-{{ formset.prefix }}-add_more').click(function() {
         var form_idx = $('#id_{{ formset.prefix }}-TOTAL_FORMS').val();
-        $('#formset-{{ formset.prefix }}').append($('#formset-{{ formset.prefix }}-empty_form').html().replace(/__prefix__/g, form_idx));
+        $('#formset-{{ formset.prefix }}-add_more').before($('#formset-{{ formset.prefix }}-empty_form').html().replace(/__prefix__/g, form_idx));
         $('#id_{{ formset.prefix }}-TOTAL_FORMS').val(parseInt(form_idx) + 1);
     });
 </script>
+
+{% endcomment %}
 
 </div>

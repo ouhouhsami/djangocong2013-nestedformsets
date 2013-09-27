@@ -1,6 +1,5 @@
 # http://yergler.net/blog/2013/09/03/nested-formsets-redux/
 
-import inspect
 from django.core.exceptions import ValidationError
 
 from django.forms.models import (
@@ -10,68 +9,7 @@ from django.forms.models import (
 
 from django.forms.models import modelform_factory
 
-
-class BaseNestedFormset(BaseInlineFormSet):
-
-    
-    def add_fields(self, form, index):
-
-        # allow the super class to create the fields as usual
-        super(BaseNestedFormset, self).add_fields(form, index)
-
-        form.nested = self.nested_formset_class(
-            instance=form.instance,
-            data=form.data if self.is_bound else None,
-            prefix='%s-%s' % (
-                form.prefix,
-                self.nested_formset_class.get_default_prefix(),
-            ),
-        )
-
-    def is_valid(self):
-
-        result = super(BaseNestedFormset, self).is_valid()
-
-        if self.is_bound:
-            # look at any nested formsets, as well
-            for form in self.forms:
-                if not self._should_delete_form(form):
-                    result = result and form.nested.is_valid()
-
-        return result
-
-    def save(self, commit=True):
-
-        result = super(BaseNestedFormset, self).save(commit=commit)
-
-        for form in self.forms:
-            if not self._should_delete_form(form):
-                form.nested.save(commit=commit)
-
-        return result
-
-
-def nested_formset_factory(parent_model, child_model, grandchild_model):
-
-    parent_child = inlineformset_factory(
-        parent_model,
-        child_model,
-        formset=BaseNestedFormset,
-        extra=1
-    )
-
-
-    parent_child.nested_formset_class = inlineformset_factory(
-        child_model,
-        grandchild_model,
-        extra=1
-    )
-
-    return parent_child
-
-
 # Enhanced nested formsets part
-
 
 class ExtendedBaseNestedFormset(BaseInlineFormSet):
 
@@ -99,11 +37,11 @@ class ExtendedBaseNestedFormset(BaseInlineFormSet):
     def is_valid(self):
 
         result = super(ExtendedBaseNestedFormset, self).is_valid()
-
         if self.is_bound:
             # look at any nested formsets, as well
             for form in self.forms:
                 if not self._should_delete_form(form):
+                    # below we could use is_valid from django.forms.formsets
                     result = result and [f.is_valid() for f in form.nested]
 
         return result
@@ -115,14 +53,7 @@ class ExtendedBaseNestedFormset(BaseInlineFormSet):
         for form in self.forms:
             if not self._should_delete_form(form):
                 for f in form.nested:
-                    print ">>>>>>>> ", f.instance.pk
-                    if f.instance.pk is not None:
-                        f.save(commit=commit)
-                    #else:
-                    #    raise ValidationError([
-                    #        ValidationError('Error 1', code='error1'),
-                    #        ValidationError('Error 2', code='error2'),
-                    #    ])
+                    f.save(commit=commit)
 
         return result
 

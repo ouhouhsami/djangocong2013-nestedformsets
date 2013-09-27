@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+</head>
+
+<body>
+	<h1>{{ object }} (<a href="{% url 'extended-update' object.id %}">edit</a>)</h1>
+
+	<h2>Members</h2>
+	<ul>
+		{% for m in object.membership_set.all %}
+		<li>{{ m.artist }} ({{ m.roles.all|join:", "}})</li>
+		{% endfor %}
+	</ul>
+
+	<h2>Albums</h2>
+	<ul>
+		{% for record in band.record_set.all %}
+		{{ record.title }}
+		<ul>
+			{% for track in record.track_set.all %}
+			<li>{{ track }}
+				<ul>
+				{% for artist_contribution in track.artistcontribution_set.all %}
+					<li>{{ artist_contribution.artist }} ({{ artist_contribution.roles.all|join:", " }})</li>
+				{% endfor %}
+				</ul>
+			</li>
+			{% endfor %}
+		</ul>
+		{% endfor %}
+	</ul>
+
+	<h2>Gigs</h2>
+
+	<ul>
+		{% for concert in band.concert_set.all %}
+			<li>{{ concert.date_time }} - {{ concert.place }} - {{ concert.price }}€
+				<ul>
+					{% for track in concert.trackplaylist_set.all %}
+						<li>{{ track.track }}</li>
+					{% endfor %}
+				</ul>
+			</li>
+		{% endfor %}
+	</ul>
+
+
+</body>
+
+
+</html>

@@ -18,7 +18,7 @@ class Role(models.Model):
 
 
 class Band(models.Model):
-    name = models.CharField(max_length=255)
+    name = models.CharField("Band name", max_length=255)
     members = models.ManyToManyField(Artist, through='Membership')
 
     def get_absolute_url(self):
@@ -35,15 +35,15 @@ class Membership(models.Model):
 
 
 class Record(models.Model):
-    title = models.CharField(max_length=255)
+    title = models.CharField("Record title", max_length=255)
     band = models.ForeignKey(Band)
 
-    #def __unicode__(self):
-    #    return self.title
+    def __unicode__(self):
+        return self.title
 
 
 class Track(models.Model):
-    title = models.CharField(max_length=255)
+    title = models.CharField("Track title", max_length=255)
     record = models.ForeignKey(Record)
     contributions = models.ManyToManyField(Artist, through="ArtistContribution")
 
