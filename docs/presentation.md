@@ -3,19 +3,19 @@
 Samuel Goldszmidt ([@ouhouhsami](https://twitter.com/ouhouhsami))
 
 
-1. Les formulaires (*"form"*)
-2. Les séries de formulaire (*"formset"*)
-3. Les séries de formulaires  (*"formset"*) imbriqués ... et leur édition simultanée sur une seule page
+1. Les *form*
+2. Les *formset*
+3. Les *nested formset* (série de formulaires imbriqués)  ... et leur édition simultanée sur une seule page
 
 ---
 
-## Les formulaires *"form"*
+## Les *form*
 
 ### Création
 
-#### Form
+#### Class `Form`
 
-Création d'un formulaire en spécifiant ses champs.
+Créer un formulaire en spécifiant ses champs.
 ```
 from django import forms
 
@@ -26,9 +26,9 @@ class ContactForm(forms.Form):
     cc_myself = forms.BooleanField(required=False)
 ```
 
-#### ModelForm
+#### Class `ModelForm`
 
-Création d'un formulaire automatiquement à partir d'un modèle Django.
+Créer un formulaire automatiquement à partir d'un modèle Django.
 ```
 from django.forms import ModelForm
 from django.db import models
@@ -51,7 +51,7 @@ class ArticleForm(ModelForm):
         fields = ['pub_date', 'headline', 'content', 'reporter']
 ```
 
-### Validation
+### Validation de *form*
 
 ```
 form = ArticleForm(request.POST)  
@@ -61,12 +61,11 @@ if form.is_valid():
    # do something with the form.cleaned_data
 ```
 
-### Admin
+### Admin - Class `ModelAdmin`
 
 * Edition d'une instance d'un modèle
 * Affichage de la liste des instances d'un modèle
 
-**ModelAdmin**
 ```
 from django.contrib import admin
 
@@ -78,37 +77,41 @@ admin.site.register(Article, ArticleAdmin)
 
 ---
 
-## Les séries de formulaire "*formset*"
+## Les *formset*
 
-Une série de formulaire "*formset*" est une abstraction qui permet de travailler avec plusieurs formulaires sur une même page.
+Un "*formset*" est une abstraction qui permet de travailler avec plusieurs formulaires "*form*" sur une même page.
 
 ### Création
 
 #### *formset_factory* 
-Pour plusieurs instance de Form
+Création de plusieurs instances de `Form`
+
 ```
 from django.forms.formsets import formset_factory
 ContactFormSet = formset_factory(ContactForm)
 formset = ContactFormSet()
 ```
+
 #### *modelformset_factory* 
-Pour plusieurs instances de ModelForm
+Création de plusieurs instances de `ModelForm`
+
 ```
 from django.forms.models import modelformset_factory
 ArticleFormSet = modelformset_factory(Article)
 formset = ArticleFormSet()
 ```
+
 #### *inlineformset_factory* 
-Pour plusieurs instances de ModelForm, liées par clef étrangère à une même instance.
-Couche d'abstraction au dessus des séries de formulaires pour un modèle.
+Création de plusieurs instances de `ModelForm`, liées par une clef étrangère à une même instance.
+
 ```
 from django.forms.models import inlineformset_factory
 ArticleFormSet = inlineformset_factory(Reporter, Article)
 reporter = Reporter.objects.get(name=u'Henri Cartier-Bresson')
-formset = BookFormSet(instance=reporter)
+formset = ArticleFormSet(instance=reporter)
 ```
 
-### Validation
+### Validation de *formset*
 
 ```
 formset = ArticleFormSet(request.POST, instance=reporter)
@@ -117,11 +120,10 @@ if formset.is_valid():
     pass
 ```
 
-### Admin
+### Admin - Class `TabularInline`  `StackedInline`
+Permettent d'éditer dans une même page une instance d'un modèle et les instances d'un modèle lié.
 
-Edition d'une instance et de ses instances liées par clef étrangère
 
-**TabularInline**, **StackedInline**
 ```
 from django.contrib import admin
 
@@ -136,10 +138,10 @@ class ReporterAdmin(admin.ModelAdmin):
 admin.site.register(Reporter, ReporterAdmin)
 ```
 
-## Les séries de formulaires imbriqués
+## Les *nested formset*
   
 
-Partant de ces modèles : Block <= Building <= Tenant
+Partant de ces modèles : `Block` ⇐ `Building` ⇐ `Tenant`
 
 ```
 from django.db import models
@@ -163,17 +165,16 @@ class Tenant(models.Model):
     )
 ```
 
-> Objectif : Pouvoir éditer les instances de Building et les instances imbriquées de Tenant dans une seule page.  
+> Objectif : Pouvoir éditer les instances de `Building` et les instances imbriquées de `Tenant` dans une seule page.  
 > ATTENTION, cela ne fait pas toujours sens en terme d'ergonomie (... mais parfois si).
 
 
 ### Création
 
-> Pas de solution toute faite, mais une approche proposée ici par Nathan Yergler : [Nested Formsets](http://yergler.net/blog/2013/09/03/nested-formsets-redux/) et [GitHub nested-formset](https://github.com/nyergler/nested-formset)
+> Pas de solution toute faite incluse dans Django (l'admin ne permet d'éditer qu'un niveau de relation).  
+> Mais l'approche proposée par Nathan Yergler : [Nested Formsets](http://yergler.net/blog/2013/09/03/nested-formsets-redux/) et [GitHub nested-formset](https://github.com/nyergler/nested-formset) permet d'y remédier.
 
-#### Une fabrique
-
-Qui va créer un formulaire du type :
+Une fabrique, en charge de la création du formulaire :
 
 ```
     building_form_1
@@ -188,9 +189,10 @@ Qui va créer un formulaire du type :
         tenant-building_form_3-form_1
         tenant-building_form_3-form_2
         tenant-building_form_3-form_3
+    ...
 ```
 
-Equivalente à inlineformset_factory, mais avec les 3 modèles `nested_formset_factory(Block, Building, Tenant)` : 
+La fabrique proposée est semblable à `inlineformset_factory`, mais elle a besoin de 3 modèles, ici `Block`, `Building` et `Tenant` : 
 
 ```
 def nested_formset_factory(parent_model, child_model, grandchild_model):
@@ -198,7 +200,7 @@ def nested_formset_factory(parent_model, child_model, grandchild_model):
     parent_child = inlineformset_factory(
         parent_model,
         child_model,
-        formset=BaseNestedFormset,
+        formset=BaseNestedFormset,  # <=
     )
 
     parent_child.nested_formset_class = inlineformset_factory(
@@ -208,11 +210,16 @@ def nested_formset_factory(parent_model, child_model, grandchild_model):
 
     return parent_child
 ```
-BaseNestedFormset comme formset de inlineformset_factory pour Block et Building permet de gérer les formulaires Tenant qui seront liés à chaque Building. Gérer, ie. : 
+2 `inlineformset_factory` : 
 
-* ajouter les formulaires
-* vérifier qu'ils sont valides
-* les sauvegarder
+* la première construit le formset `BuildingFormset` via `Block` et `Building`
+* la seconde construit le formset `TenantFormset` via `Building` et `Tenant`
+
+La première a `BaseNestedFormset` comme paramètre `formset` (en place de `BaseInlineFormSet` par défaut). Cela permet de gérer les formsets `TenantFormset` qui seront liés à chaque form de `BuildingFormset` : 
+
+* Ajouter les `TenantFormset` imbriqués via `add_fields` de `BaseNestedFormset` (dans l'attribut nested de chaque form de `BuildingFormset`)
+* Vérifier que les `TenantFormset` imbriqués sont valides via `is_valid`
+* Sauvegarder ces `TenantFormset` imbriqués via `save`
 
 ```
 from django.forms.models import (
@@ -259,10 +266,8 @@ class BaseNestedFormset(BaseInlineFormSet):
 
 ```
 
-
-
 #### Une vue pour l'édition
-Basée sur UpdateView Class-based view
+Basée sur la Class-based view `UpdateView`  
 
 ```
 from django.views.generic.edit import UpdateView
@@ -289,7 +294,9 @@ class EditBuildingsView(UpdateView):
 ```
 
 #### Le template associé
-Pour l'affichage du formulaire d'édition des Buildings et Tenants simultanément pour un Block.
+
+Pour l'affichage du formulaire d'édition des `BuildingFormset` et `TenantFormset` imbriqués pour un Block.
+
 ```
 <h1>Edit Buildings</h1>
 
@@ -321,21 +328,22 @@ Pour l'affichage du formulaire d'édition des Buildings et Tenants simultanémen
 
 # Et pour *n* niveaux de profondeurs ?
 
-> BIS REPETITA : ATTENTION, cela fait très très très rarement sens en terme d'ergonomie (... mais parfois si).
+> BIS REPETITA : ATTENTION, cela fait encore plus rarement sens en terme d'ergonomie (... mais parfois si).
 
-Un cas très imbriqué
+Un cas très imbriqué : cf. [djangocong2013-nestedformsets](https://github.com/ouhouhsami/djangocong2013-nestedformsets)
 
 ```
        <= Members
 Band   <= Records <= Tracks <= ArtistContribution
        <= Concerts <= TrackPlaylist
 ```
-Le début de propositions d'implémentation : 
 
-* Construire un graphe de dépendance des modèles
-* Construire les séries de formulaires associés ((en prenant en compte les relations many2many avec champ supplémentaire))
+Début de propositions d'implémentation : 
+
+* Construction d'un graphe de dépendance des modèles
+* Construction des formsets associés ((en prenant en compte les relations many2many avec champ supplémentaire))
 * Afficher ces formulaires imbriqués via les templates
-* Possibilité d'ajouter des séries de formulaires imbriqués en JavaScript
+* Donner la possibilité d'ajouter des séries de formulaires imbriqués en JavaScript
 
-Cf. [djangocong2013-nestedformsets](https://github.com/ouhouhsami/djangocong2013-nestedformsets)
+
 
